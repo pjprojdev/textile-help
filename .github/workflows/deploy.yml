@@ -1,0 +1,129 @@
+name: Sync and publish textile portfolio
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "pages-portfolio"
+  cancel-in-progress: true
+
+jobs:
+  validate-and-publish:
+    runs-on: ubuntu-latest
+    env:
+      PAGES_TOKEN: ${{ secrets.PAGES_ADMIN_TOKEN }}
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fail if Pages admin token is missing
+        run: |
+          if [ -z "${PAGES_TOKEN}" ]; then
+            echo "Missing required secret: PAGES_ADMIN_TOKEN"
+            echo "Create a fine-grained personal access token with repository Administration: write, Pages: write, and Contents: write."
+            exit 1
+          fi
+
+      - name: Sync works.json from available images
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          works_path = Path("works.json")
+          images_dir = Path("images")
+          image_files = sorted(
+              p for p in images_dir.iterdir()
+              if p.is_file() and p.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+          )
+
+          if not image_files:
+              raise SystemExit("No preview images found in /images")
+
+          existing = []
+          if works_path.exists():
+              existing = json.loads(works_path.read_text(encoding="utf-8"))
+              if not isinstance(existing, list):
+                  raise SystemExit("works.json must contain a list")
+
+          existing_by_image = {}
+          for i, item in enumerate(existing, start=1):
+              if not isinstance(item, dict):
+                  raise SystemExit(f"Entry {i} is not an object")
+              image = str(item.get("image", "")).strip()
+              if image:
+                  existing_by_image[image] = item
+
+          synced = []
+          for image_file in image_files:
+              image_key = f"./images/{image_file.name}"
+              item = dict(existing_by_image.get(image_key, {}))
+              item["title"] = str(
+                  item.get("title", image_file.stem.replace("-", " ").replace("_", " ").title())
+              ).strip()
+              item["image"] = image_key
+              item["medium"] = str(item.get("medium", "Textile Preview")).strip() or "Textile Preview"
+              item["year"] = str(item.get("year", "2026")).strip() or "2026"
+              item["description"] = str(
+                  item.get("description", f"Preview image for {item['title']}.")
+              ).strip()
+              synced.append(item)
+
+          works_path.write_text(
+              json.dumps(synced, indent=2, ensure_ascii=False) + "\n",
+              encoding="utf-8",
+          )
+          print(f"Synced {works_path} with {len(synced)} image(s)")
+          PY
+
+      - name: Validate site files
+        run: |
+          test -f index.html
+          test -f styles.css
+          test -f app.js
+          test -f cover.jpg
+          test -f works.json
+
+      - name: Commit synced works.json
+        run: |
+          if git diff --quiet -- works.json; then
+            echo "No works.json changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${PAGES_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git add works.json
+          git commit -m "Sync works.json from images"
+          git push origin HEAD:main
+
+      - name: Enable GitHub Pages from main branch
+        env:
+          REPO: ${{ github.repository }}
+        run: |
+          curl -L \
+            -X PUT \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${PAGES_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2026-03-10" \
+            "https://api.github.com/repos/${REPO}/pages" \
+            -d '{"build_type":"legacy","source":{"branch":"main","path":"/"}}'
+
+      - name: Request GitHub Pages build
+        env:
+          REPO: ${{ github.repository }}
+        run: |
+          curl -L \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${PAGES_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2026-03-10" \
+            "https://api.github.com/repos/${REPO}/pages/builds"

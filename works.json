@@ -1,0 +1,23 @@
+[
+  {
+    "title": "Warp Study 01",
+    "image": "./images/sample1-preview.jpg",
+    "medium": "Cotton, natural dye",
+    "year": "2026",
+    "description": "Close crop from an ikat development sample. Full repeat not shown."
+  },
+  {
+    "title": "Motif Fragment 02",
+    "image": "./images/sample2-preview.jpg",
+    "medium": "Hand block and pigment",
+    "year": "2026",
+    "description": "Preview crop only, with scale and production details withheld."
+  },
+  {
+    "title": "Repeat Study 03",
+    "image": "./images/sample3-preview.jpg",
+    "medium": "Silk blend, woven structure",
+    "year": "2026",
+    "description": "Low-resolution surface preview for portfolio display."
+  }
+]

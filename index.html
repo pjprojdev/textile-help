@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Textile Collection</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="hero wrap">
+    <a class="back" href="/">← Back to main site</a>
+    <p class="eyebrow">Protected Preview Collection</p>
+    <h1>Textile Collection</h1>
+    <p class="sub">Show only low-resolution preview images here. Keep production files and full repeats private.</p>
+  </header>
+
+  <main class="wrap">
+    <section class="panel statement">
+      <h2>Artist Note</h2>
+      <p>This page presents selected preview images only. The full repeat, exact scale, construction details, and production files are not published online.</p>
+    </section>
+
+    <section class="panel">
+      <div id="works" class="grid"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer wrap">
+    <p>© 2026 Your Name. All textile designs, motifs, repeats, layouts, and preview images are protected under applicable law. Unauthorized reproduction, tracing, adaptation, or commercial use is prohibited.</p>
+  </footer>
+
+  <div id="viewer" class="viewer hidden" aria-hidden="true">
+    <div class="viewer-inner">
+      <button id="closeViewer" class="close-btn" aria-label="Close preview">×</button>
+      <div class="viewer-frame">
+        <img id="viewerImage" src="" alt="">
+        <div class="viewer-watermark">PREVIEW ONLY • © Your Name</div>
+      </div>
+      <p id="viewerCaption" class="viewer-caption"></p>
+    </div>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
